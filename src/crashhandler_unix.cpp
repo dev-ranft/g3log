@@ -19,7 +19,9 @@
 #include <csignal>
 #include <cstring>
 #include <unistd.h>
-#include <execinfo.h>
+#if defined(__GNUC__) && (__GNUC__ > 4)
+#   include <execinfo.h>
+#endif
 #include <cxxabi.h>
 #include <cstdlib>
 #include <sstream>
@@ -51,8 +53,14 @@ namespace {
 
 
    bool shouldDoExit() {
+#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ <= 8)
+       static uint64_t firstExit{0};
+       firstExit++;
+       auto const count = firstExit;
+#else
       static std::atomic<uint64_t> firstExit{0};
       auto const count = firstExit.fetch_add(1, std::memory_order_relaxed);
+#endif
       return (0 == count);
    }
 
@@ -153,7 +161,7 @@ namespace g3 {
          if (nullptr != rawdump && !std::string(rawdump).empty()) {
             return {rawdump};
          }
-
+#if defined(__GNUC__) && (__GNUC__ > 4)
          const size_t max_dump_size = 50;
          void* dump[max_dump_size];
          size_t size = backtrace(dump, max_dump_size);
@@ -201,6 +209,9 @@ namespace g3 {
          } // END: for(size_t idx = 1; idx < size && messages != nullptr; ++idx)
          free(messages);
          return oss.str();
+#else
+         return "stracktrace not supported";
+#endif
       }
 
 
