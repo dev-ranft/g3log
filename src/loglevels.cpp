@@ -7,6 +7,7 @@
 * ============================================================================*/
 
 #include "g3log/loglevels.hpp"
+#include "g3log/compat.hpp"
 #include <atomic>
 #include <cassert>
 #include <map>
